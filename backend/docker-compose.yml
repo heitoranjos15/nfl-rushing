@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  db:
+    image: postgres:13
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgres_data:/data'
+    environment:
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: nfl-rushing
+    networks:
+      - nfl-rushing-network
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+      interval: 5s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    expose:
+      - "4000"
+    ports:
+      - "4000:4000"
+      - "9229:9229"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    networks:
+      - nfl-rushing-network
+    environment:
+      NODE_ENV: dev
+      DB_PASS: 123
+      DB_NAME: nfl-rushing
+
+volumes:
+  postgres_data: {}
+
+networks:
+  nfl-rushing-network: {}
